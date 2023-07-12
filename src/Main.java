@@ -1,12 +1,12 @@
 import java.util.Random;
 
 public class Main {
-    public static int bossHealth = 1000;
+    public static int bossHealth = 700;
     public static int bossDamage = 50;
     public static String bossDefence;
-    public static int[] heroesHealth = {270, 280, 250, 300};
-    public static int[] heroesDamage = {10, 15, 20, 0};
-    public static String[] heroesAttackType = {"Physical", "Magical", "Kinetic", "Healer"};
+    public static int[] heroesHealth = {270, 280, 250, 400, 500, 250, 300, 200};
+    public static int[] heroesDamage = {10, 15, 20, 0, 5, 7, 4, 9};
+    public static String[] heroesAttackType = {"Physical", "Magical", "Kinetic", "Healer", "Golem", "Lucky", "Berserk", "Thor"};
     public static int roundNumber;
 
     public static void main(String[] args) {
@@ -18,11 +18,19 @@ public class Main {
 
     public static void playRound() {
         roundNumber++;
+        berserkBlockAndReturnDamage();
+
         chooseBossDefence();
         healer();
         bossHits();
+
+        golem();
+        luckyDodges();
+
         heroesHit();
+        thorStun();
         printStatistics();
+
     }
 
     public static void chooseBossDefence() {
@@ -38,29 +46,83 @@ public class Main {
                 if (heroesHealth[i] < 0) {
                     heroesHealth[i] = 0;
                 }
+                if (heroesHealth[6] < 0) {
+                    heroesHealth[6] = 0;
+                }
             }
         }
     }
 
-    public static void healer(){
-        int healPoint = 100;
-        boolean justOneHealInOneRound = false;
 
+    public static void berserkBlockAndReturnDamage() {
+        int berserkIndex = 6;
+        int blockDamage = bossDamage / 5;
+        heroesHealth[berserkIndex] -= blockDamage;
+        bossDamage += blockDamage;
+        System.out.println(heroesAttackType[berserkIndex] + " blocked " + blockDamage +
+                " boss damage and returned it");
+    }
+
+
+    public static void golem() {
+        int takenDamageFromBoss = 0;
+        boolean onlyGetsOneShot = false;
 
         for (int x = 0; x < heroesHealth.length; x++) {
-            if (heroesHealth[3] > 0){
-                if (heroesHealth[x] < 100){
-                    if (!justOneHealInOneRound){
-                        justOneHealInOneRound = true;
-
-                        heroesHealth[x] += healPoint;
-                        System.out.println(heroesAttackType[3] + " just healed hero: " + heroesAttackType[x]);
+            if (heroesHealth[4] > 0 && bossHealth >= 0) {
+                if (heroesAttackType[x] != "Golem") {
+                    if (!onlyGetsOneShot) {
+                        onlyGetsOneShot = true;
+                        takenDamageFromBoss = bossDamage % heroesHealth[x];
+                        heroesHealth[4] -= takenDamageFromBoss;
+                        System.out.println(heroesAttackType[4] + " took boss damage " +
+                                takenDamageFromBoss + " from hero " + heroesAttackType[x]);
                     }
-
                 }
             }
         }
+    }
 
+    public static void thorStun() {
+        Random random = new Random();
+        boolean stun = random.nextBoolean();
+        if (stun) {
+            System.out.println(heroesAttackType[7] + " stunned the boss!");
+            roundNumber++;
+        }
+    }
+
+    public static void luckyDodges() {
+        Random random = new Random();
+        int dodgeChance = random.nextInt(10);
+        if (dodgeChance < 1) {
+            System.out.println(heroesAttackType[5] + " dodged the boss attack!");
+        } else {
+            heroesHealth[5] -= bossDamage;
+            if (heroesHealth[5] < 0) {
+                heroesHealth[5] = 0;
+            }
+            System.out.println(heroesAttackType[5] + " got hit by the boss");
+        }
+    }
+
+    public static void healer() {
+        int healPoint = 100;
+        boolean justOneHealInOneRound = false;
+
+        for (int x = 0; x < heroesHealth.length; x++) {
+            if (heroesHealth[3] > 0 && bossHealth >= 0) {
+                if (heroesHealth[x] < 100 && heroesHealth[x] > 0) {
+                    if (!justOneHealInOneRound) {
+                        if (heroesAttackType[x] != "Healer") {
+                            justOneHealInOneRound = true;
+                            heroesHealth[x] += healPoint;
+                            System.out.println(heroesAttackType[3] + " just healed hero: " + heroesAttackType[x]);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public static void heroesHit() {
@@ -86,11 +148,6 @@ public class Main {
             System.out.println("Heroes won!!!");
             return true;
         }
-        /*if (heroesHealth[0] <= 0 && heroesHealth[1] <= 0 && heroesHealth[2] <= 0) {
-            System.out.println("Boss won!!!");
-            return true;
-        }
-        return false;*/
         boolean allHeroesDead = true;
         for (int i = 0; i < heroesHealth.length; i++) {
             if (heroesHealth[i] > 0) {
